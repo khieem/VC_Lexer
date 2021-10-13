@@ -11,9 +11,10 @@ ENDSTATES
 18 operator
 20 operator
 22 operator
+24 operator
 
 DFA
-0 (digit 1) (. 9) (" 11) (letter 13) (seperator 15) (+ 16) (- 16) (* 16) (/ 16) (< 17) (> 17) (! 17) (= 19) (| 21) (& 23)
+0 (digit 1) (. 9) (" 11) (letter 13) (E 13) (seperator 15) (+ 16) (- 16) (* 16) (/ 16) (< 17) (> 17) (! 17) (= 19) (| 21) (& 23) (ws 0)
 1 (digit 1) (. 2) (E 4) (other 8)
 2 (digit 3) (other 7)
 3 (digit 3) (E 4) (other 7)
@@ -23,7 +24,7 @@ DFA
 9 (digit 10)
 10 (digit 10) (E 4) (other 7)
 11 (" 12) (other 11)
-13 (digit 13) (letter 13) (other 14)
+13 (digit 13) (letter 13) (E 13) (other 14)
 17 (= 18) (other 20)
 19 (= 18) (other 24)
 21 (| 22)
