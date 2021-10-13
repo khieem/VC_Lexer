@@ -23,6 +23,8 @@ string source_code; // source code file as a string for convenience
 //////// FUNCTION PROTOTYPES //////////
 void load_data(); // đọc dữ liệu từ file .dat vào 3 bảng: keywords, endstates và table 
 void remove_comments(istream& file); // xóa bỏ comment từ "file" và lưu vào "source_code"
+string reduce(char c); // chuyển ký tự 'c' về dạng đầu vào DFA
+
 
 //////////// MAIN //////////////
 int main(int argc, char const *argv[])
@@ -51,35 +53,82 @@ int main(int argc, char const *argv[])
 	load_data();	
 	remove_comments(file);
 
+	int linecount = 1;
+	int i = 0, j = 0;
+	char c;
+	int state = 0;
+	string input;
+	vector<string> tokens;
+
+	vector<char> buffer;
+	while (c = source_code[j++])
+	{
+		if (c == '\n') ++linecount;
+		input = reduce(c);
+
+		if (table[state].count(input) == 0)	{
+			if (table[state].count("other") == 0) // k nhận input
+			{
+				cout << "ERROR on line " << linecount << endl;
+				break;
+			}
+			else // nhận input qua other
+			{
+
+				state = table[state].at("other");
+				--j;
+			}
+		}
+		else // nhận input bình thường
+		{
+			if (input != "ws") buffer.push_back(c);
+			state = table[state].at(input);
+		}
+
+		if (endstates[state] != "") // state laf trang thai ket thuc
+		{
+			string s = {buffer.begin(), buffer.end()};
+			if (s == "true" || s == "false")
+			{
+				line = s + " " + "literal";
+			}
+			else if (keywords.count(s))
+			{
+				line = s + " " + "keyword";
+			}
+			else line = s + " " + endstates[state];
+			buffer.clear();
+			tokens.push_back(line);
+			state = 0;
+		}
+	}
+	for (string s : tokens) cout << s << endl;
+
+	// while current state not error state
+	// {
+	// 	lexeme += c = getchar();
+	// 	if current state is acceptstate
+	// 		clear stack
+	// 	push(stack, current state)
+	// 	sym = translate[c]
+	// 	next state = delta(current state, sym)
+
+	// }
+
+	// roll back
+	// while not a final state aor stack not empty
+	// {
+	// 	state = pop stack
+	// 	unget() last symbol of lexeme
+
+	// }
+
+	// if final state
+	// 	return token[state]
+	// else reutrn error
+
 	return 0;
 }
-// string role;
-// char last;
-// while (input)
-// {
-//    last 
-//    if (is_number(input))
-//    {
-//       role = number
-//    }
-//    state = tb[state][role];
-//    if (!state)
-//    {
-//       state = tb[state][other]
-//    }
-//    if is_end_state(state)
-//    {
-
-//       a = tach_tu() // apples
-//       if is_key_word(a)      
-//       {
-//          symbol_table[a] = keywords[a];
-//       }
-//       state = 0
-//       continue
-//    }
-//    last = input
-// }
 
 
 ////// FUNCTION IMPLEMENTATIONS //////
@@ -141,7 +190,11 @@ void remove_comments(istream& file)
 	source_code = {istreambuf_iterator<char>(file), istreambuf_iterator<char>{}};
 	int n = source_code.length();
 
-	// duyệt từ đầu đến cuối, sao chép những ký tự không trong comment sang mảng này
+	/* CHÚ Ý. dùng mảng sao chép từng ký tự thay cho phép nối string
+	chạy hiệu quả hơn rất nhiều hưng khiến từ bị xê dịch trong dòng
+	chưa rõ có thể gây lỗi trong việc đếm dòng hay không. nếu có thì chuyển sang cách nối string
+	*/
+	// string res = "";
 	char res[n];
 	for (size_t i = 0; i < n; i++)
 		res[i] = ' ';	
@@ -152,9 +205,14 @@ void remove_comments(istream& file)
 	int last = 0;
 	for (int i = 0; i < n; ++i)
 	{
+		
 		// đang trong single comment và gặp kết dòng
 		if (single_cmt == true && source_code[i] == '\n')
+		{
 			single_cmt = false;
+			// res += '\n';
+			res[i] = '\n';
+		}
 
 		// đang trong multi comment và gặp "*/"
 		else if (multi_cmt == true && source_code[i] == '*' && source_code[i+1] == '/')
@@ -162,7 +220,11 @@ void remove_comments(istream& file)
 
 		// bỏ qua tất cả ký tự nằm trong comment, kể cả nnững comment khác
 		else if (single_cmt || multi_cmt)
-			continue;
+		{
+			if (source_code[i] == '\n')
+				// res += source_code[i];
+				res[i] = source_code[i];
+		}
 		else if (source_code[i] == '/' && source_code[i+1] == '/')
 			single_cmt = true, i++;
 		else if (source_code[i] == '/' && source_code[i+1] == '*')
@@ -170,6 +232,18 @@ void remove_comments(istream& file)
 
 		// giữ lại những ký tự không nằm trong comment
 		else res[i] = source_code[i];
+		// else res += source_code[i];
 	}
 	source_code = res;
+}
+
+string reduce(char c)
+{
+	if (c == 'e' || c == 'E') return "E"; // e_notation_float
+	if ('a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' || c == '_') return "letter";
+	if ('0' <= c && c <= '9') return "digit";
+	if (c == '{' || c == '}'|| c == '['|| c == ']' || c == '('|| c == ')'|| c == ';'|| c == ',')
+		return "seperator";
+	if (c == ' ' || c == '\t' || c == '\n') return "ws";
+	return string(1, c);
 }
