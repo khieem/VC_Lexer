@@ -1,0 +1,27 @@
+void    function      (
+boolean abc, 
+      float b = 12.3e4){
+   
+   // đây là 1 chú thích dòng
+
+   b = .2;
+
+   for{int i   =0; i<
+   12345; i = i+10}
+   {
+      a = "chang hieu sao lai co string literal khi vc k co kieu string";
+      if (a < 3.2) {
+         return a+ b;
+         /* đây là
+         một chú thích đoạn */
+
+      }
+      while (true) {
+         return false;
+         /* ra sao nếu 1 // chú thích dòng trong 1 chú thích đoạn */
+
+         // /* và ngược lại */
+      }
+   }
+   
+}
