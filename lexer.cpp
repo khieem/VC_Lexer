@@ -18,12 +18,13 @@ set<string> keywords;
 string endstates[25];
 map<string, int> table[25]; // transition table, implemented as a map
 string source_code; // source code file as a string for convenience
-
+vector<string> tokens; // kết quả phân tích
 
 //////// FUNCTION PROTOTYPES //////////
 void load_data(); // đọc dữ liệu từ file .dat vào 3 bảng: keywords, endstates và table 
 void remove_comments(istream& file); // xóa bỏ comment từ "file" và lưu vào "source_code"
 string reduce(char c); // chuyển ký tự 'c' về dạng đầu vào DFA
+void write_output(string des = "out.vctok"); // ghi kết quả phân tích ra "des"
 
 
 //////////// MAIN //////////////
@@ -58,19 +59,25 @@ int main(int argc, char const *argv[])
 	char c;
 	int state = 0;
 	string input;
-	vector<string> tokens;
-
+	bool error = false;
 	vector<char> buffer;
 	while (c = source_code[j++])
 	{
-		if (c == '\n') ++linecount;
+		if (int(c) < 0) break; // đừng đặt điều kiện này vào trong while
+		if (c == '\n') {
+			++linecount;
+			continue;
+		}
 		input = reduce(c);
 
 		if (table[state].count(input) == 0)	{
 			if (table[state].count("other") == 0) // k nhận input
 			{
-				cout << "ERROR on line " << linecount << endl;
-				break;
+				error = true;
+				cout << "Dong " << linecount << ". '" << string(buffer.begin(), buffer.end()) + c  << "'" << " is not recognized!" << endl;
+				buffer.clear();
+				state = 0;
+				continue;
 			}
 			else // nhận input qua other
 			{
@@ -84,7 +91,7 @@ int main(int argc, char const *argv[])
 			if (input != "ws") buffer.push_back(c);
 			state = table[state].at(input);
 		}
-
+		string line;
 		if (endstates[state] != "") // state laf trang thai ket thuc
 		{
 			string s = {buffer.begin(), buffer.end()};
@@ -101,32 +108,11 @@ int main(int argc, char const *argv[])
 			tokens.push_back(line);
 			state = 0;
 		}
+		// cout << c << state << " ";
 	}
-	for (string s : tokens) cout << s << endl;
 
-	// while current state not error state
-	// {
-	// 	lexeme += c = getchar();
-	// 	if current state is acceptstate
-	// 		clear stack
-	// 	push(stack, current state)
-	// 	sym = translate[c]
-	// 	next state = delta(current state, sym)
-
-	// }
-
-	// roll back
-	// while not a final state aor stack not empty
-	// {
-	// 	state = pop stack
-	// 	unget() last symbol of lexeme
-
-	// }
-
-	// if final state
-	// 	return token[state]
-	// else reutrn error
-
+	if (!error)
+	write_output();
 	return 0;
 }
 
@@ -246,4 +232,11 @@ string reduce(char c)
 		return "seperator";
 	if (c == ' ' || c == '\t' || c == '\n') return "ws";
 	return string(1, c);
+}
+
+void write_output(string des)
+{
+	ofstream file(des);
+	for (const string& s : tokens)
+		file << s << '\n';
 }
