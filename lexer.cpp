@@ -67,14 +67,48 @@ int main( int argc, char const *argv[] )
 	load_data();	
 	remove_comments( file );
 
+	// dùng để đếm dòng, giúp báo số dòng khi có lỗi
 	int linecount = 1;
+
+	// j và c giúp duyệt qua từng ký tự
 	int j = 0;
 	char c;
+
+	// trạng thái của automat
 	int state = 0;
+
+	// đầu vào của automat, thu được bằng hàm reduce()
+	// các giá trị cụ thể của input là: letter, digit, <, =, other, ...
 	string input;
+
+	// nếu error vẫn = false sau khi chạy, chương trình sẽ xuất kết quả ra file
+	// nếu không, lỗi sẽ được báo ra console
 	bool error = false;
+
+	/**
+	 * @brief bộ đệm giúp tách từ tiện hơn.
+	 * các ký tự c thỏa mãn: reduce(c) được nhận và có giá trị khác "other" sẽ được
+	 * push_back() vào buffer. nếu reduce(c) == "other" thì trong bộ đệm đã có được từ cần tách.
+	 * khi đó chỉ cần giảm j đi 1 để hoàn tác, rồi lấy tất cả ký tự trong bộ đệm
+	 * ra sẽ được từ tố cần tách. Sau cùng chỉ việc trống bộ đệm và
+	 * đặt state=0 để bắt đầu tách 1 từ mới 
+	 */
 	vector<char> buffer;
 
+	/**
+	 * cách hoạt động: duyệt qua từng ký tự trong source_code,
+	 * chuyển ký tự đó về dạng input cho automat (ví dụ ký tự 'k'
+	 * được chuyển thành "letter", ký tự ' ' được chuyển thành "ws").
+	 * dfa được cài đặt dưới dạng 1 bảng băm do đó có thể dễ dàng
+	 * chuyển trạng thái của máy với mỗi ký tự đọc được, ví dụ: 
+	 * state = dfa[state][input]. DFA được nhóm thiết kế sao cho 
+	 * input == "other" luôn dẫn đến trạng thái kết thúc (ngoại 
+	 * lệ là trạng thái 11 khi đọc string literal, "other" dẫn quay 
+	 * trở lại trạng thái 11 bởi sau dấu mở ngoặc kép ta chấp nhận 
+	 * mọi ký tự ngoại trừ dấu đóng ngoặc kép). và không có trạng 
+	 * thái kết thúc nào có thể dẫn đến 1 trạng thái kết thúc khác.
+	 * điều này giúp cài đặt dưới đây trở nên đơn giản hơn.
+	 */
 	while ( c = source_code[ j++ ] )
 	{
 		if ( int( c ) < 0 ) break; // đừng đặt điều kiện này vào trong while
@@ -83,12 +117,12 @@ int main( int argc, char const *argv[] )
 		input = reduce( c );
 		if ( table[ state ].count( input ) == 0 )
 		{
-			// tại state không nhận input => lỗi
+			// tại state không nhận input và cũng không nhận "other" => lỗi
 			if ( table[ state ].count( "other" ) == 0)
 			{
 				error = true;
 				
-				/* ngoại lệ tại state=4 với ký tự đọc được là 'e'
+				/* ngoại lệ tại state=4 với ký tự vừa đọc được là 'e'
 				 * automat đợi 1 chữ số hoặc +- để hoàn thành dạng e_notation_float
 				 * tuy nhiên vẫn có thể chấp nhận chữ cái trong trường hợp
 				 * indentifier là "2efgh". điều kiện if này để xử lý
@@ -99,7 +133,8 @@ int main( int argc, char const *argv[] )
 					// lấy lại ký tự ngay sau ký tự 'e'
 					buffer.push_back( source_code[ j-1 ] );
 
-					// tiếp tục lấy tất cả ký tự còn lại. vd 2ed[dfjegow] = 5;
+					// coi tất cả ký tự còn lại đều thuộc vào token hiện tại,
+					// tiếp tục lấy ký tự cho đến khi gặp input khác "letter" và "digit"
 					while ( isalpha( source_code[ j ] ) || isdigit( source_code[ j ] ) )
 					{
 						buffer.push_back( source_code[ j++ ] );
@@ -113,14 +148,16 @@ int main( int argc, char const *argv[] )
 				state = 0;
 				continue;
 			}
-			else // nhận input qua "other"
+			else // máy không nhận trực tiếp input mà nhận qua "other"
 			{
 				/**
 				 * xử lý indentifier không đúng
 				 * (bên trên là trường hợp riêng khi có 'e' ngay sau digit đứng đầu tiên)
 				 * bởi sau 'e' chỉ có thể nhận digit hoặc +-, gặp letter sẽ rơi vào if bên trên
-				 * trong khi sau digit có thể nhận "other", trong đó có cả letter
-				 * làm thế này để tránh phải sửa automat và sửa nhiều code, dù code sẽ bị lặp
+				 * (ví dụ indentifier là 2efgh), trong khi sau digit có thể nhận "letter"
+				 * (ví dụ indentifier là 2fgh). có thể sửa đổi DFA để có thể nhận "letter"
+				 * sau khi nhận input "E"), nhưng làm thế này sẽ đỡ phải sửa automat và
+				 * sửa nhiều code, dù code sẽ bị lặp
 				 */
 				if ( state == 1 && ( input == "letter" || input == "E" ) )
 				{
@@ -134,7 +171,7 @@ int main( int argc, char const *argv[] )
 					state = 0;
 					continue;
 				}
-				// nhận mọi ký tự nếu đang trong string literal
+				// nhận mọi ký tự nếu đang trong string literal, như đã nói ở chú thích bên trên
 				else if ( state == 11 )
 				{
 					buffer.push_back(c);
@@ -146,12 +183,17 @@ int main( int argc, char const *argv[] )
 				state = table[ state ][ "other" ];
 			}
 		}
-		else // nhận input bình thường
+		else // máy nhận trực tiếp input
 		{
 			if ( input != "ws" ) buffer.push_back( c );
 			state = table[ state ][ input ];
 		}
 
+		// nếu trạng thái hiện tại là trạng thái kết thúc, thực hiện
+		// tách từ bằng buffer và gán vai trò cho từ đó
+
+		// "word" là token
+		// "pair" là 1 cặp (token, role), mỗi "pair" sẽ được ghi trên 1 dòng trong output
 		string pair, word;
 		if ( endstates[ state ] != "" ) // state là trạng thái kết thúc
 		{
