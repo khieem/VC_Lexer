@@ -3,12 +3,14 @@
 Đây là chương trình phân tích từ tố cho ngôn ngữ VC. Mã VC đầu vào nằm trong file `*.vc`, đầu ra là [`out.vctok`](out.vctok) chứa danh sách các từ tố và chức năng tương ứng, mỗi từ một dòng, trong trường hợp không có bất kỳ lỗi nào xuất hiện trong mã nguồn. Nếu không, một danh sách gồm những token lỗi và số dòng tương ứng sẽ được in ra màn hình console.
 
 ## Bắt đầu
-Mã nguồn nằm tại [`lexer.cpp`](lexer.cpp)  
+Mã nguồn nằm tại [`lexer.cpp`](lexer.cpp), chỉ việc Build và chạy như thông thường.
+<br>
+Tuy nhiên do mã nguồn chỉ nằm gọn trong 1 file nên tốt hơn cả là sử dụng trực tiếp GNU GCC
 ```
 > g++ lexer.cpp -o lexer
 > ./lexer
 ``` 
-Chương trình sẽ mặc định tìm đến file `in.vc`. Tuy nhiên có thể cung cấp thêm tham số `path` là đường dẫn tới  mã nguồn  
+Chương trình sẽ mặc định tìm đến file `in.vc`. Tuy nhiên có thể cung cấp thêm tham số `path` là đường dẫn tới đầu vào  
 ```
 > ./lexer path
 ```
