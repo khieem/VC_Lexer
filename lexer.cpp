@@ -244,7 +244,7 @@ void remove_comments( istream& file )
 	chưa rõ có thể gây lỗi trong việc đếm dòng hay không. nếu có thì chuyển sang cách nối string
 	*/
 	// string res = "";
-	char res[ n ];
+	vector<char> res(n);
 	for ( size_t i = 0; i < n; i++ )
 		res[i] = ' ';	
 
@@ -281,7 +281,8 @@ void remove_comments( istream& file )
 		else res[ i ] = source_code[ i ];
 		// else res += source_code[i];
 	}
-	source_code = res;
+	for(size_t i=0;i<n;i++)
+		source_code[i]=res[i];
 }
 
 string reduce( char c )
