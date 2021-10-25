@@ -185,7 +185,8 @@ int main( int argc, char const *argv[] )
 		}
 		else // máy nhận trực tiếp input
 		{
-			if ( input != "ws" ) buffer.push_back( c );
+			// cập nhật: dấu ngoặc không thuộc string literal, thêm điều kiện khác <">
+			if ( input != "ws" && input != "\"") buffer.push_back( c );
 			state = table[ state ][ input ];
 		}
 
